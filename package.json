@@ -1,0 +1,19 @@
+﻿{
+  "name": "com.fogrex.reactivetag",
+  "displayName": "ReactiveTag",
+  "version": "0.0.1",
+  "unity": "2022.3",
+  "description": "ReactiveTag is a hierarchical and event driven tag system for Unity.",
+  "author": {
+    "name": "Fogrex",
+    "url": "https://fogrex.com",
+    "email": "fogrexon@gmail.com"
+  },
+  "keywords": [
+      "tag",
+      "reactive",
+      "hierarchy",
+      "event"
+  ],
+  "category": "Scripting"
+}
