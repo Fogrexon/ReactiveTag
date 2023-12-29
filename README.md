@@ -5,11 +5,12 @@
 ## Author
 
 Fogrexon
+
 Email: fogrexon@gmail.com
 
 ## Description
 
-ReactiveTagは、Unityで階層型タグを提供するパッケージです
+ReactiveTagは、Unityで階層型タグを提供するパッケージです。
 
 ## Install
 
