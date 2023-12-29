@@ -2,6 +2,7 @@
   "name": "Fogrex.ReactiveTag.Editor",
   "references": [
     "Fogrex.ReactiveTag",
+    "Microsoft.CSharp"
   ],
   "optionalUnityReferences": [],
   "includePlatforms": [

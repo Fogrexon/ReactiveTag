@@ -1,6 +1,8 @@
-﻿namespace Fogrex.ReactiveTag.Editor;
-
-public class ReactiveTagRuntime
+﻿namespace ReactiveTag.Editor
 {
-    
+    public class ReactiveTagEditor
+    {
+        
+    }
 }
+

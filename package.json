@@ -15,5 +15,8 @@
       "hierarchy",
       "event"
   ],
-  "category": "Scripting"
+  "category": "Scripting",
+  "dependencies": {
+    "jp.hadashikick.vyaml": "https://github.com/hadashiA/VYaml.git?path=VYaml.Unity/Assets/VYaml#0.20.0"
+  }
 }
