@@ -21,12 +21,12 @@ namespace ReactiveTag
         /// タグのID
         /// 比較はこのIDで行う
         /// </summary>
-        public Guid Id => this._id;
+        protected Guid Id => this._id;
         
         /// <summary>
         /// タグの名前
         /// </summary>
-        public string Name => this._name;
+        protected string Name => this._name;
         
         /// <summary>
         /// 親タグ
@@ -37,30 +37,13 @@ namespace ReactiveTag
         /// 子タグのリスト
         /// </summary>
         /// <param name="id"></param>
-        public ReadOnlyCollection<Tag> Children => Array.AsReadOnly(_children);
+        protected ReadOnlyCollection<Tag> Children => Array.AsReadOnly(_children);
         
-        public Tag(Guid id, string name)
+        public Tag(Guid id, string name, Tag parent = null)
         {
             this._id = id;
             this._name = name;
-        }
-
-        /// <summary>
-        /// タグが有効化された際に呼ばれる
-        /// </summary>
-        /// <param name="component">タグのつけ外しを行うコンポーネント</param>
-        public void OnEnable(ReactiveTagComponent component)
-        {
-            
-        }
-
-        /// <summary>
-        /// タグが無効化された際に呼ばれる
-        /// </summary>
-        /// <param name="component">タグのつけ外しを行うコンポーネント</param>
-        public void OnDisable(ReactiveTagComponent component)
-        {
-            
+            this._parent = parent;
         }
         
         /// <summary>

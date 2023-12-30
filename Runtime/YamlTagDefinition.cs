@@ -6,7 +6,7 @@ namespace ReactiveTag
     public partial class YamlTagDefinition
     {
         public string Name;
-        
+
         public YamlTagDefinition[] Children;
     }
 }

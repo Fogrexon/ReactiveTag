@@ -37,12 +37,10 @@ namespace ReactiveTag
                     component.OnTagAttach();
                 }
             }
-            target.OnEnable(this);
         }
         
         private void DisableTag(Tag target)
         {
-            target.OnDisable(this);
             if (target.Parent is not null)
             {
                 var components = _effects.Where(effect => effect.TargetTag.Equals(target.Parent));
@@ -83,7 +81,7 @@ namespace ReactiveTag
         /// <param name="target"></param>
         public void Add(Tag target)
         {
-            target.OnEnable(this);
+            EnableTag(target);
             _tags.Add(target);
         }
         
@@ -97,7 +95,7 @@ namespace ReactiveTag
             var flag = _tags.Remove(target);
             if (flag)
             {
-                target.OnDisable(this);
+                DisableTag(target);
             }
 
             return flag;
@@ -113,7 +111,7 @@ namespace ReactiveTag
             var removedCount = _tags.RemoveAll(t => t.Equals(target));
             for (var i=0;i<removedCount;i++)
             {
-                target.OnDisable(this);
+                DisableTag(target);
             }
 
             return removedCount;
@@ -130,7 +128,7 @@ namespace ReactiveTag
             foreach (var removingTag in removingTags)
             {
                 _tags.Remove(removingTag);
-                removingTag.OnDisable(this);
+                DisableTag(target);
             }
         }
 
