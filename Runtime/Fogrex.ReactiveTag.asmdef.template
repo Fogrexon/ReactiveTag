@@ -1,8 +1,7 @@
 ﻿{
   "name": "Fogrex.ReactiveTag",
   "references": [
-    "VYaml.Core",
-    "Microsoft.CSharp"
+    "VYaml.Core"
   ],
   "includePlatforms": [],
   "excludePlatforms": []

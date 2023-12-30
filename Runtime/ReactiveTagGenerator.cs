@@ -24,7 +24,7 @@ namespace ReactiveTag
             {
                 sb.Append(hash[i].ToString("x2"));
             }
-            return "ReactiveTag" + sb.ToString();
+            return "_" + sb.ToString();
         }
         
         private void Awake()
@@ -57,16 +57,13 @@ namespace ReactiveTag
                 return;
             }
             var utf8Bytes = System.Text.Encoding.UTF8.GetBytes(text.text);
-            Debug.Log($"{utf8Bytes.Length} bytes");
             var yaml = YamlSerializer.Deserialize<YamlTagDefinition>(utf8Bytes);
             
             // Assets/ReactiveTag/Generated/Tags/以下にファイルを生成する
             // すでにファイルが存在する場合には一旦全部消す
             var path = "Assets/ReactiveTag/Generated/Tags";
-            Debug.Log("Check directory");
             if (System.IO.Directory.Exists(path))
             {
-                Debug.Log("Delete directory");
                 System.IO.Directory.Delete(path, true);
             }
             System.IO.Directory.CreateDirectory(path);
@@ -128,7 +125,7 @@ namespace ReactiveTag.Generated.Tags
     public class {0}: Tag
     {{
 {1}
-        public {0}(Guid id, string name): base(id, name)
+        public {0}(Guid id, string name, Tag parent = null): base(id, name, parent)
         {{
 {2}
         }}
@@ -153,7 +150,7 @@ namespace ReactiveTag.Generated.Tags
 
 namespace ReactiveTag.Generated.Tags
 {{
-    public class {0}: Tag
+    public class {0}
     {{
 {1}
     }}
@@ -163,7 +160,7 @@ namespace ReactiveTag.Generated.Tags
         public static {0} {2} {{ get {{ 
             if (_{1} is null)
             {{
-                _{1} = new {0}(Guid.NewGuid(), ""{2}"", this);
+                _{1} = new {0}(Guid.NewGuid(), ""{2}"");
             }}
             return _{1};
         }} }}
