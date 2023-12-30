@@ -10,23 +10,6 @@ namespace ReactiveTag
     {
         public static ReactiveTagGenerator Instance { get; private set; }
         
-        /// <summary>
-        /// タグ名からIDを生成するスクリプト
-        /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
-        public static string GenerateIdFromFullTag(string path)
-        {
-            byte[] bytes = Encoding.UTF8.GetBytes(path);
-            byte[] hash = MD5.Create().ComputeHash(bytes);
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < hash.Length; i++)
-            {
-                sb.Append(hash[i].ToString("x2"));
-            }
-            return "_" + sb.ToString();
-        }
-        
         public const string TagRootPath = "Assets/ReactiveTag_Generated/Tags";
         
         private void Awake()
@@ -52,15 +35,12 @@ namespace ReactiveTag
         [ContextMenu("Generate Scripts")]
         private void GenerateScripts()
         {
-            var text = Resources.Load<TextAsset>("CustomTagList");
-            if (text is null)
+            var yaml = TagYamlDecoder.LoadYamlFromResource();
+            if (yaml is null)
             {
-                Debug.LogError($"Tag file not found: CustomTagList.yaml");
+                Debug.LogError($"Tag file not found: CustomTagList");
                 return;
             }
-            var utf8Bytes = System.Text.Encoding.UTF8.GetBytes(text.text);
-            var yaml = YamlSerializer.Deserialize<YamlTagDefinition>(utf8Bytes);
-            
             // Assets/ReactiveTag/Generated/Tags/以下にファイルを生成する
             // すでにファイルが存在する場合には一旦全部消す
             if (System.IO.Directory.Exists(TagRootPath))
@@ -70,34 +50,30 @@ namespace ReactiveTag
             System.IO.Directory.CreateDirectory(TagRootPath);
             
             // ファイルの生成
-            CreateRootTag(yaml.Name, yaml.Children);
-            RecursiveYamlInterpreter(yaml.Name, yaml.Children);
+            CreateRootTag(yaml);
+            foreach (var child in yaml.Children)
+            {
+                RecursiveYamlInterpreter(child);
+            }
         }
 
-        private void RecursiveYamlInterpreter(string baseTag, YamlTagDefinition[] children)
+        private static void RecursiveYamlInterpreter(YamlTagDefinition tagElement)
         {
-            if (children is null || children.Length == 0)
+            foreach (var child in tagElement.Children)
             {
-                return;
+                RecursiveYamlInterpreter(child);
             }
-            foreach (var child in children)
-            {
-                var tagName = child.Name;
-                var tagFullName = $"{baseTag}{tagName}";
-                
-                RecursiveYamlInterpreter(tagFullName, child.Children);
-
-                GenerateClassFiles(tagFullName, child.Children);
-            }
+            GenerateClassFiles(tagElement);
         }
 
         /// <summary>
-        /// 
+        /// クラスファイルを生成する
         /// </summary>
-        /// <param name="tagFullName"></param>
-        /// <param name="tagChildren"></param>
-        private void GenerateClassFiles(string tagFullName, YamlTagDefinition[] tagChildren)
+        /// <param name="tagElement"></param>
+        private static void GenerateClassFiles(YamlTagDefinition tagElement)
         {
+            var tagChildren = tagElement.Children;
+            
             var childrenTemplate = "        private {0} _{1};\n";
             var constructorTemplate = "            this._{0} = new {1}(Guid.NewGuid(), \"{2}\", this);\n";
             var childrenGetterTemplate = "        public {0} {1} => this._{2};\n";
@@ -109,16 +85,13 @@ namespace ReactiveTag
             {
                 foreach (var child in tagChildren)
                 {
-                    var childFullName = $"{tagFullName}{child.Name}";
-                    var childId = GenerateIdFromFullTag(childFullName);
                     var lowerKey = child.Name.ToLower();
-                    childrenScript += string.Format(childrenTemplate, childId, lowerKey);
-                    constructorScript += string.Format(constructorTemplate, lowerKey, childId, child.Name);
-                    childrenGetterScript += string.Format(childrenGetterTemplate, childId, child.Name, lowerKey);
+                    childrenScript += string.Format(childrenTemplate, child.Id, lowerKey);
+                    constructorScript += string.Format(constructorTemplate, lowerKey, child.Id, child.Name);
+                    childrenGetterScript += string.Format(childrenGetterTemplate, child.Id, child.Name, lowerKey);
                 }
             }
 
-            var tagId = GenerateIdFromFullTag(tagFullName);
             var classScript = string.Format(@"using System;
 
 namespace ReactiveTag.Generated.Tags
@@ -133,9 +106,9 @@ namespace ReactiveTag.Generated.Tags
 {3}
     }}
 }}
-", tagId, childrenScript, constructorScript, childrenGetterScript);
+", tagElement.Id, childrenScript, constructorScript, childrenGetterScript);
             
-            var path = $"{TagRootPath}/{tagId}.cs";
+            var path = $"{TagRootPath}/{tagElement.Id}.cs";
             System.IO.File.WriteAllText(path, classScript);
         }
 
@@ -145,8 +118,11 @@ namespace ReactiveTag.Generated.Tags
         /// </summary>
         /// <param name="rootName"></param>
         /// <param name="children"></param>
-        private void CreateRootTag(string rootName, YamlTagDefinition[] children)
+        private static void CreateRootTag(YamlTagDefinition rootDef)
         {
+            var rootName = rootDef.Name;
+            var children = rootDef.Children;
+            
             var rootClassTemplate = @"using System;
 
 namespace ReactiveTag.Generated.Tags
@@ -172,11 +148,8 @@ namespace ReactiveTag.Generated.Tags
             {
                 foreach (var child in children)
                 {
-                    var childFullName = $"{rootName}{child.Name}";
-                    var childId = GenerateIdFromFullTag(childFullName);
-                    
                     var lowerKey = child.Name.ToLower();
-                    childrenScript += string.Format(childrenTemplate, childId, lowerKey, child.Name);
+                    childrenScript += string.Format(childrenTemplate, child.Id, lowerKey, child.Name);
                 }
             }
             var classScript = string.Format(rootClassTemplate, rootName, childrenScript);
