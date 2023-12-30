@@ -1,6 +1,6 @@
 ﻿namespace ReactiveTag.Editor
 {
-    public class ReactiveTagEditor
+    public class ReactiveTagSettingWindow
     {
         
     }

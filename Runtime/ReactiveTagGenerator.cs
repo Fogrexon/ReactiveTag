@@ -27,6 +27,8 @@ namespace ReactiveTag
             return "_" + sb.ToString();
         }
         
+        public const string TagRootPath = "Assets/ReactiveTag_Generated/Tags";
+        
         private void Awake()
         {
             if (Instance is not null && Instance != this)
@@ -61,12 +63,11 @@ namespace ReactiveTag
             
             // Assets/ReactiveTag/Generated/Tags/以下にファイルを生成する
             // すでにファイルが存在する場合には一旦全部消す
-            var path = "Assets/ReactiveTag/Generated/Tags";
-            if (System.IO.Directory.Exists(path))
+            if (System.IO.Directory.Exists(TagRootPath))
             {
-                System.IO.Directory.Delete(path, true);
+                System.IO.Directory.Delete(TagRootPath, true);
             }
-            System.IO.Directory.CreateDirectory(path);
+            System.IO.Directory.CreateDirectory(TagRootPath);
             
             // ファイルの生成
             CreateRootTag(yaml.Name, yaml.Children);
@@ -134,7 +135,7 @@ namespace ReactiveTag.Generated.Tags
 }}
 ", tagId, childrenScript, constructorScript, childrenGetterScript);
             
-            var path = $"Assets/ReactiveTag/Generated/Tags/{tagId}.cs";
+            var path = $"{TagRootPath}/{tagId}.cs";
             System.IO.File.WriteAllText(path, classScript);
         }
 
@@ -180,7 +181,7 @@ namespace ReactiveTag.Generated.Tags
             }
             var classScript = string.Format(rootClassTemplate, rootName, childrenScript);
             
-            var path = $"Assets/ReactiveTag/Generated/Tags/{rootName}.cs";
+            var path = $"{TagRootPath}/{rootName}.cs";
             System.IO.File.WriteAllText(path, classScript);
         }
     }
