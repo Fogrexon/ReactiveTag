@@ -1,5 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
+using ReactiveTag.Utils;
+using UnityEditor;
 using UnityEditor.IMGUI.Controls;
+using UnityEngine;
 
 namespace ReactiveTag.Editor
 {
@@ -9,6 +13,9 @@ namespace ReactiveTag.Editor
         private Dictionary<int, YamlTagDefinition> _idToTagDefinition;
         private Dictionary<YamlTagDefinition, int> _tagDefinitionsToId;
         private int idCount = 0;
+        
+        public delegate void OnTagSelectionAction(YamlTagDefinition tag);
+        public OnTagSelectionAction OnTagSelection;
         public ReactiveTagTreeView(TreeViewState state, YamlTagDefinition tagDefinition) : base(state)
         {
             _tagDefinition = tagDefinition;
@@ -16,13 +23,25 @@ namespace ReactiveTag.Editor
             _idToTagDefinition = new Dictionary<int, YamlTagDefinition>();
             _tagDefinitionsToId = new Dictionary<YamlTagDefinition, int>();
             
-            idCount = 0;
-            RecursiveIdToTagDefinition(tagDefinition);
+            idCount = 1;
+            RecursiveTableCreation(tagDefinition);
             
             Reload();
         }
         
-        private void RecursiveIdToTagDefinition(YamlTagDefinition tagElement)
+        public void ResetTree(YamlTagDefinition tagDefinition)
+        {
+            _tagDefinition = tagDefinition;
+            _idToTagDefinition = new Dictionary<int, YamlTagDefinition>();
+            _tagDefinitionsToId = new Dictionary<YamlTagDefinition, int>();
+            
+            idCount = 1;
+            RecursiveTableCreation(tagDefinition);
+            
+            Reload();
+        }
+
+        private void RecursiveTableCreation(YamlTagDefinition tagElement)
         {
             _idToTagDefinition.Add(idCount, tagElement);
             _tagDefinitionsToId.Add(tagElement, idCount);
@@ -34,18 +53,27 @@ namespace ReactiveTag.Editor
             }
             foreach (var child in tagElement.Children)
             {
-                RecursiveIdToTagDefinition(child);
+                RecursiveTableCreation(child);
             }
         }
         
         protected override TreeViewItem BuildRoot()
         {
-            return RecursiveYamlInterpreter(_tagDefinition, -1);
+            var root = new TreeViewItem { id = 0, depth = -1, displayName = "Root" };
+            root.AddChild(RecursiveYamlInterpreter(_tagDefinition, 0));
+            return root;
         }
         
         private TreeViewItem RecursiveYamlInterpreter(YamlTagDefinition tagElement, int depth)
         {
-            var item = new TreeViewItem { id = _tagDefinitionsToId[tagElement], depth = depth, displayName = tagElement.Name };
+            if (!_tagDefinitionsToId.TryGetValue(tagElement, out var id))
+            {
+                RecursiveTableCreation(tagElement);
+                id = _tagDefinitionsToId[tagElement];
+            }
+            
+            
+            var item = new TreeViewItem { id = id, depth = depth, displayName = tagElement.Name };
             
             if (tagElement.Children is not null)
             {
@@ -56,7 +84,51 @@ namespace ReactiveTag.Editor
                 }
             }
 
+            if (depth == -1) Debug.Log(item);
             return item;
+        }
+
+        protected override void SingleClickedItem(int id)
+        {
+            var selectedTag = _idToTagDefinition[id];
+            OnTagSelection?.Invoke(selectedTag);
+        }
+        
+        protected override void ContextClickedItem(int id)
+        {
+            var ev = Event.current;
+            ev.Use();
+    
+            var menu = new GenericMenu();
+            menu.AddItem(new GUIContent("Add Child"), false, () =>
+            {
+                var selectedTag = _idToTagDefinition[id];
+                var newTag = new YamlTagDefinition()
+                {
+                    Name = TagValidator.CreateNewTagName(selectedTag),
+                    IconPath = "",
+                    Parent = selectedTag,
+                };
+                if (selectedTag.Children is null) selectedTag.Children = new List<YamlTagDefinition>();
+                selectedTag.Children.Add(newTag);
+                Reload();
+            });
+            if (id == 1)
+            {
+                // ルートアイテムなので削除不可
+                menu.AddDisabledItem(new GUIContent("Remove"));
+            }
+            else
+            {
+                menu.AddItem(new GUIContent("Remove"), false, () =>
+                {
+                    var selectedTag = _idToTagDefinition[id];
+                    var parent = selectedTag.Parent;
+                    if (parent != null) parent.Children.Remove(selectedTag);
+                    Reload();
+                });
+            }
+            menu.ShowAsContext();
         }
     }
 }

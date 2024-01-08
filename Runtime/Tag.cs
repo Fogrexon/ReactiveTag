@@ -12,7 +12,7 @@ namespace ReactiveTag
     /// </summary>
     public abstract class Tag
     {
-        private Guid _id;
+        private string _id;
         private string _name;
         [CanBeNull] private Tag _parent;
         private Tag[] _children;
@@ -21,7 +21,7 @@ namespace ReactiveTag
         /// タグのID
         /// 比較はこのIDで行う
         /// </summary>
-        protected Guid Id => this._id;
+        protected string Id => this._id;
         
         /// <summary>
         /// タグの名前
@@ -39,7 +39,7 @@ namespace ReactiveTag
         /// <param name="id"></param>
         protected ReadOnlyCollection<Tag> Children => Array.AsReadOnly(_children);
         
-        public Tag(Guid id, string name, Tag parent = null)
+        public Tag(string id, string name, Tag parent = null)
         {
             this._id = id;
             this._name = name;

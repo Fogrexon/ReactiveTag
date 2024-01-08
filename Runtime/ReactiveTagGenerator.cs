@@ -8,34 +8,14 @@ namespace ReactiveTag
     [ExecuteAlways]
     public class ReactiveTagGenerator: MonoBehaviour
     {
-        public static ReactiveTagGenerator Instance { get; private set; }
-        
         public const string TagRootPath = "Assets/ReactiveTag_Generated/Tags";
         
-        private void Awake()
-        {
-            if (Instance is not null && Instance != this)
-            {
-                DestroyImmediate(this);
-                return;
-            }
-            Instance = this;
-            
-#if !UNITY_EDITOR
-            // destroyしない
-            DontDestroyOnLoad(this);
-#endif
-            
-            GenerateScripts();
-        }
         /// <summary>
         /// タグ用のスクリプトファイルを生成する
-        /// inspectorから実行できる
         /// </summary>
-        [ContextMenu("Generate Scripts")]
-        private void GenerateScripts()
+        public static void GenerateScripts()
         {
-            var yaml = TagYamlDecoder.LoadYamlFromResource();
+            var yaml = ReactiveTagIO.DecodeYamlToTag();
             if (yaml is null)
             {
                 Debug.LogError($"Tag file not found: CustomTagList");
@@ -59,9 +39,12 @@ namespace ReactiveTag
 
         private static void RecursiveYamlInterpreter(YamlTagDefinition tagElement)
         {
-            foreach (var child in tagElement.Children)
+            if (tagElement.Children is not null)
             {
-                RecursiveYamlInterpreter(child);
+                foreach (var child in tagElement.Children)
+                {
+                    RecursiveYamlInterpreter(child);
+                }
             }
             GenerateClassFiles(tagElement);
         }
@@ -74,9 +57,9 @@ namespace ReactiveTag
         {
             var tagChildren = tagElement.Children;
             
-            var childrenTemplate = "        private {0} _{1};\n";
-            var constructorTemplate = "            this._{0} = new {1}(Guid.NewGuid(), \"{2}\", this);\n";
-            var childrenGetterTemplate = "        public {0} {1} => this._{2};\n";
+            var childrenTemplate = "        private _{0} _{1};\n";
+            var constructorTemplate = "            this._{0} = new _{1}(\"{1}\", \"{2}\", this);\n";
+            var childrenGetterTemplate = "        public _{0} {1} => this._{2};\n";
 
             var childrenScript = "";
             var constructorScript = "";
@@ -96,10 +79,10 @@ namespace ReactiveTag
 
 namespace ReactiveTag.Generated.Tags
 {{
-    public class {0}: Tag
+    public class _{0}: Tag
     {{
 {1}
-        public {0}(Guid id, string name, Tag parent = null): base(id, name, parent)
+        public _{0}(string id, string name, Tag parent = null): base(id, name, parent)
         {{
 {2}
         }}
@@ -116,8 +99,7 @@ namespace ReactiveTag.Generated.Tags
         /// ルートのタグを生成する
         /// ルートはstaticメソッドでタグを取得できるようにする
         /// </summary>
-        /// <param name="rootName"></param>
-        /// <param name="children"></param>
+        /// <param name="rootDef"></param>
         private static void CreateRootTag(YamlTagDefinition rootDef)
         {
             var rootName = rootDef.Name;
@@ -133,11 +115,11 @@ namespace ReactiveTag.Generated.Tags
     }}
 }}
 ";
-            var childrenTemplate = @"        private static {0} _{1};
-        public static {0} {2} {{ get {{ 
+            var childrenTemplate = @"        private static _{0} _{1};
+        public static _{0} {2} {{ get {{ 
             if (_{1} is null)
             {{
-                _{1} = new {0}(Guid.NewGuid(), ""{2}"");
+                _{1} = new _{0}(""{0}"", ""{2}"");
             }}
             return _{1};
         }} }}
